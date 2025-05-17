@@ -1,0 +1,11 @@
+# Ignore node_modules in any subfolders
+**/node_modules/
+
+# Ignore all .env files in any subfolder
+**/.env
+
+# Ignore log files in entire project
+**/*.log
+
+# macOS junk files
+.DS_Store
