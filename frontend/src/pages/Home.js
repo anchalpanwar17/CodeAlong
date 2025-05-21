@@ -1,8 +1,46 @@
 import React from "react";
-
 const Home = () => {
     return (
-    <h1> Home Page</h1>
+    <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+        <img src="/coolbackgrounds-particles-compute.png" alt="" class="absolute inset-0 -z-10 size-full object-cover object-right md:object-center"></img>
+        <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+            <div className="mt-10 flex items-center gap-3">
+                <img src="/logoNew2.png" alt="Logo" className="h-30 w-45" />
+               
+            </div>
+        </div>
+
+        <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+          <form class="space-y-6" action="#" method="POST">
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="roomId" class="block text-sm/6 font-medium text-white">Room ID</label>
+              </div>
+              <div class="mt-2">
+                <input type="text" name="roomId" id="roomId" autocomplete="roomId" required class="block w-full rounded-md bg-transparent px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-indigo-600 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" />
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="username" class="block text-sm/6 font-medium text-white">Username</label>
+              </div>
+              <div class="mt-2">
+                <input type="text" name="username" id="username" autocomplete="username" required class="block w-full rounded-md bg-transparent px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-indigo-600 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" />
+              </div>
+            </div>
+
+            <div>
+              <button type="submit" class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Join</button>
+            </div>
+          </form>
+
+          <p class="mt-10 text-center text-sm/6 text-gray-500">
+            If u don't have an invite then create 
+            &nbsp;<a href="#" class="font-semibold text-indigo-600 hover:text-indigo-500">New Room</a>
+          </p>
+        </div>
+      </div>
     );
 };
  
