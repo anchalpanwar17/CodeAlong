@@ -1,5 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
+import {v4 as uuidV4} from "uuid";
 const Home = () => {
+    const [roomId, setRoomId] = useState('');
+    const [username, setUsername] = useState('');
+    const createNewRoom = (e) => {
+      e.preventDefault();
+      const id = uuidV4();
+      setRoomId(id);
+    }
     return (
     <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
         <img src="/coolbackgrounds-particles-compute.png" alt="" class="absolute inset-0 -z-10 size-full object-cover object-right md:object-center"></img>
@@ -17,7 +25,7 @@ const Home = () => {
                 <label for="roomId" class="block text-sm/6 font-medium text-white">Room ID</label>
               </div>
               <div class="mt-2">
-                <input type="text" name="roomId" id="roomId" autocomplete="roomId" required class="block w-full rounded-md bg-transparent px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-indigo-600 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" />
+                <input type="text" name="roomId" id="roomId" autocomplete="roomId" onChange={(e) => setRoomId(e.target.value)} value={roomId} required class="block w-full rounded-md bg-transparent px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-indigo-600 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" />
               </div>
             </div>
 
@@ -26,7 +34,7 @@ const Home = () => {
                 <label for="username" class="block text-sm/6 font-medium text-white">Username</label>
               </div>
               <div class="mt-2">
-                <input type="text" name="username" id="username" autocomplete="username" required class="block w-full rounded-md bg-transparent px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-indigo-600 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" />
+                <input type="text" name="username" id="username" autocomplete="username" onChange={(e) => setUsername(e.target.value)} value={username} required class="block w-full rounded-md bg-transparent px-3 py-1.5 text-base text-white outline outline-1 -outline-offset-1 outline-indigo-600 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6" />
               </div>
             </div>
 
@@ -35,9 +43,9 @@ const Home = () => {
             </div>
           </form>
 
-          <p class="mt-10 text-center text-sm/6 text-gray-500">
+          <p class="mt-10 text-center text-sm/6 text-gray-200">
             If u don't have an invite then create 
-            &nbsp;<a href="#" class="font-semibold text-indigo-600 hover:text-indigo-500">New Room</a>
+            &nbsp;<a href="#" class="font-semibold text-indigo-600 hover:text-indigo-500" onClick={createNewRoom}>New Room</a>
           </p>
         </div>
       </div>
