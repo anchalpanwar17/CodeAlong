@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import socket from "../socket";
 import { useEffect } from "react";
+import io from 'socket.io-client';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ const Home = () => {
 }, []);
   const createNewRoom = (e) => {
     e.preventDefault();
-    const id = uuidV4();
+    const id = uuidV4(); //unique id
     setRoomId(id);
     socket.emit('create-room', id);
     toast.success("Successfully room created");
@@ -35,8 +36,10 @@ const Home = () => {
     console.log("checking for room...");
     socket.emit('check-room', roomId, (exists) => {
       if (exists) {
-        socket.emit('join-room', roomId);
+        socket.emit('join-room',{roomId, username});    //join room
         console.log("Joining room:", roomId, username);
+        
+        toast.success("Successfully room joined");
         navigate(`/editor/${roomId}`,
           {state: {username}});
       }else{
