@@ -13,6 +13,10 @@ function Editor() {
     socket.on("user-joined", (name) => {
       toast.success(`${name} joined the chat`)
     });
+
+    return ()=>{
+       socket.off("user-joined");
+    }
   }, []);
 
   return (

@@ -48,24 +48,24 @@ const Chat = ({ roomId, username }) => {
     setChat((prev) => [...prev, { username, message }]);
   };
 
-  const handleUserJoined = (name) => {
-    setChat((prev) => [
-      ...prev,
-      { username: "System", message: `${name} joined the chat` },
-    ]);
+  // const handleUserJoined = (name) => {
+  //   setChat((prev) => [
+  //     ...prev,
+  //     { username: "System", message: `${name} joined the chat` },
+  //   ]);
 
-  };
+  // };
 
   // Listen
   socket.on("user-list", handleUserList);
   socket.on("chat-message", handleChatMessage);
-  socket.on("user-joined", handleUserJoined);
+  // socket.on("user-joined", handleUserJoined);
 
   //Clean up
   return () => {
     socket.off("user-list", handleUserList);
     socket.off("chat-message", handleChatMessage);
-    socket.off("user-joined", handleUserJoined);
+    // socket.off("user-joined", handleUserJoined);
   };
 }, []);
 
