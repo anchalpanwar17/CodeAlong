@@ -1,13 +1,21 @@
-import React from "react";
-import { useParams, useLocation } from 'react-router-dom';
+import React, { useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import Chat from "./chat";
+import toast from "react-hot-toast";
+import socket from "../socket";
+
 
 function Editor() {
-    const { roomId } = useParams();
-    const location = useLocation();
-    const username = location.state?.username || 'Guest';
+  const { roomId } = useParams();
+  const location = useLocation();
+  const username = location.state?.username || "Guest";
+  useEffect(() => {
+    socket.on("user-joined", (name) => {
+      toast.success(`${name} joined the chat`)
+    });
+  }, []);
 
-    return (
+  return (
     <div className="flex">
       <Chat roomId={roomId} username={username} />
       <div className="flex-1 p-6">

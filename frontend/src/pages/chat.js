@@ -52,6 +52,7 @@ const Chat = ({ roomId, username }) => {
       ...prev,
       { username: "System", message: `${name} joined the chat` },
     ]);
+
   };
 
   // Listen
