@@ -65,8 +65,8 @@ io.on('connect', (socket) => {
             //     // Notify others
             //     socket.to(roomId).emit('user-joined', username);
             // })
-             io.to(roomId).emit('user-list', clients); // ✅ send proper list
-             socket.to(roomId).emit('user-joined', username); // ✅ notify others
+             io.to(roomId).emit('user-list', clients);
+             socket.to(roomId).emit('user-joined', username);
 
         }
     });
