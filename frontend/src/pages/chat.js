@@ -44,6 +44,7 @@ const Chat = ({ roomId, username }) => {
 
   const handleChatMessage = ({ username, message }) => {
     console.log("💬 Chat message received:", username, message);
+    // if (sender === username) return; 
     setChat((prev) => [...prev, { username, message }]);
   };
 
@@ -59,19 +60,19 @@ const Chat = ({ roomId, username }) => {
   socket.on("chat-message", handleChatMessage);
   socket.on("user-joined", handleUserJoined);
 
-  // Clean up
-//   return () => {
-//     socket.off("user-list", handleUserList);
-//     socket.off("chat-message", handleChatMessage);
-//     socket.off("user-joined", handleUserJoined);
-//   };
+  //Clean up
+  return () => {
+    socket.off("user-list", handleUserList);
+    socket.off("chat-message", handleChatMessage);
+    socket.off("user-joined", handleUserJoined);
+  };
 }, []);
 
   const sendMessage = (e) => {
     e.preventDefault();
     if (message.trim() !== "") {
       socket.emit("chat-message", { roomId, username, message });
-      setChat((prev) => [...prev, { username, message }]);
+      //setChat((prev) => [...prev, { username, message }]);
       setMessage("");
     }
   };
