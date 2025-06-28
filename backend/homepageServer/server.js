@@ -19,6 +19,7 @@ const io = new Server(server, {
 });
 
 const rooms = new Set();
+<<<<<<< Updated upstream
 const userSocketMap = {};
 
 function getAllConnectedClients(roomId){
@@ -30,13 +31,16 @@ function getAllConnectedClients(roomId){
         }
     });
 }
+=======
+const roomsMap = new Map();
+>>>>>>> Stashed changes
 
 io.on('connect', (socket) => {
     console.log(`Socket connected : ${socket.id}`);
 
     socket.on('create-room', (roomId) => {
         rooms.add(roomId);
-        socket.join(roomId);
+        // socket.join(roomId);
         console.log(`Room created : ${roomId}`);
     });
 
@@ -49,10 +53,14 @@ io.on('connect', (socket) => {
     });
 
     socket.on('join-room', ({roomId, username}) => {
+<<<<<<< Updated upstream
         console.log('🔥 join-room event fired with data:', roomId, username); 
+=======
+>>>>>>> Stashed changes
         if(rooms.has(roomId)){
             userSocketMap[socket.id] = username;
             socket.join(roomId);
+<<<<<<< Updated upstream
             const clients = getAllConnectedClients(roomId)
             console.log(`${socket.id} joined ${roomId}`, clients);
             //console.log(clients);
@@ -68,6 +76,21 @@ io.on('connect', (socket) => {
              io.to(roomId).emit('user-list', clients);
              socket.to(roomId).emit('user-joined', username);
 
+=======
+            console.log(`${socket.id} joined ${roomId}`);
+
+            let clients = roomsMap.get(roomId) || [];
+
+            clients = clients.filter(client => client.username !== username);
+          
+            clients.push({socketId: socket.id, username});
+            roomsMap.set(roomId, clients);
+
+            console.log(roomsMap);   
+
+            io.to(roomId).emit('room-members', clients);
+            
+>>>>>>> Stashed changes
         }
     });
 

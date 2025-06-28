@@ -1,0 +1,88 @@
+import { React, useState, useEffect } from "react";
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import toast from "react-hot-toast";
+import Member from "../components/Member";
+import Editor from "../components/Editor";
+import socket from "../socket";
+
+function EditorPage() {
+    const { roomId } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const username = location.state?.username;
+
+    const [members, setMembers] = useState([]);
+
+    useEffect(() => {
+
+        if (!username) {
+            navigate('/', { replace: true });
+            return;
+        }
+
+
+        const handleRoomMembers = (clients) => {
+            console.log("Clients in room:", clients);
+            setMembers(clients);
+        };
+
+        const joinRoom = () => {
+            socket.emit('check-room', roomId, (exists) => {
+                if (exists) {
+                    socket.emit('join-room', { roomId, username });
+                    console.log("Joining room:", roomId, username);
+                } else {
+                    toast.error("Room doesn't exist");
+                    navigate('/', { replace: true });
+                }
+            });
+        };
+
+        if (socket.connected) {
+            joinRoom();
+        } else {
+            socket.once('connect', joinRoom);
+        }
+
+        socket.on('room-members', handleRoomMembers);
+
+        return () => {
+            socket.off('room-members');
+            socket.off('connect', joinRoom); 
+        };
+    }, [roomId, username, navigate]);
+
+    return (
+        <div className="flex h-screen">
+            {/* Sidebar */}
+            <div className="w-64 bg-gray-900 text-white p-4 flex flex-col">
+                <div className="mb-8 pb-4 border-b border-gray-300">
+                    <img src="/logoNew2.png" alt="Logo" className="h-10 mx-auto" />
+                </div>
+
+                <div className="flex-1 flex-row">
+                    <p className="text-md font-semibold text-white-400 p-1 ml-3 mb-3">Members</p>
+                    <div className="flex flex-row flex-wrap">
+                        {members.map((member) => (
+                            <Member key={member.socketId} username={member.username} />
+                        ))}
+                    </div>
+
+                </div>
+
+                <button className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2">Copy Room ID</button>
+                <button className="flex w-full justify-center rounded-md bg-red-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2">Leave</button>
+            </div>
+
+            {/* Editor Space */}
+            <div className="flex-1 h-full bg-gray-100">
+                <div className="h-full border bg-white">
+                    <Editor />
+                </div>
+            </div>
+        </div>
+    );
+
+}
+
+export default EditorPage;

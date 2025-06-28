@@ -10,23 +10,32 @@ const Home = () => {
   const navigate = useNavigate();
   const [roomId, setRoomId] = useState('');
   const [username, setUsername] = useState('');
-  useEffect(() => {
-  socket.on("connect", () => {
-    console.log("✅ Connected to backend socket:", socket.id);
-  });
 
-  // Optional: show if any error
-  socket.on("connect_error", (err) => {
-    console.error("❌ Socket connection error:", err.message);
-  });
-}, []);
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log("✅ Connected to backend socket:", socket.id);
+    });
+
+    // Optional: show if any error
+    socket.on("connect_error", (err) => {
+      console.error("❌ Socket connection error:", err.message);
+    });
+  }, []);
+
   const createNewRoom = (e) => {
     e.preventDefault();
     const id = uuidV4(); //unique id
     setRoomId(id);
-    socket.emit('create-room', id);
+    if (socket.connected) {
+      socket.emit('create-room', id);
+    } else {
+      socket.once('connect', () => {
+        socket.emit('create-room', id);
+      });
+    }
     toast.success("Successfully room created");
   };
+
   const joinRoom = (e) => {
     e.preventDefault();
     if (!roomId || !username) {
@@ -34,23 +43,15 @@ const Home = () => {
       return;
     }
     console.log("checking for room...");
-    socket.emit('check-room', roomId, (exists) => {
-      if (exists) {
-        socket.emit('join-room',{roomId, username});    //join room
-        console.log("Joining room:", roomId, username);
-        
-        toast.success("Successfully room joined");
-        navigate(`/editor/${roomId}`,
-          {state: {username}});
-      }else{
-        toast.error("Room doesn't exist");
-      }
-    });
-    //console.log("couldn't find room");
+
+    navigate(`/EditorPage/${roomId}`,
+      { state: { username } });
+
   };
+
   const handleInput = (e) => {
     if (e.code === "Enter") {
-      joinRoom();
+      joinRoom(e);
     }
   };
   return (
