@@ -20,6 +20,7 @@ const io = new Server(server, {
 
 const rooms = new Set();
 const roomsMap = new Map();
+const chatHistory = new Map(); 
 
 io.on('connect', (socket) => {
     console.log(`Socket connected : ${socket.id}`);
@@ -51,15 +52,23 @@ io.on('connect', (socket) => {
             clients.push({socketId: socket.id, username});
             roomsMap.set(roomId, clients);
 
-            console.log(roomsMap);   
+            console.log(roomsMap);  
 
             io.to(roomId).emit('room-members', clients);
+            const history = chatHistory.get(roomId) || [];
+            //socket.emit('chat-history', history); 
             
         }
     });
 
     socket.on('chat-message', ({roomId, username, message})=>{
+
+        const history = chatHistory.get(roomId) || [];
+        history.push({ username, message });
+        chatHistory.set(roomId, history);
+        console.log(history)
         io.to(roomId).emit('chat-message', {username, message});
+        socket.emit('chat-history', history); 
     })
 
     socket.on('disconnect', () => {

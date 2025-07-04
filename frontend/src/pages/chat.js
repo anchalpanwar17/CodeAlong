@@ -48,23 +48,22 @@ const Chat = ({ roomId, username }) => {
     setChat((prev) => [...prev, { username, message }]);
   };
 
-  // const handleUserJoined = (name) => {
-  //   setChat((prev) => [
-  //     ...prev,
-  //     { username: "System", message: `${name} joined the chat` },
-  //   ]);
-
-  // };
+  const handleChatHistory = (history) => {
+    console.log("📜 Chat history loaded:", history);
+    setChat(history);
+  }
 
   // Listen
   socket.on("user-list", handleUserList);
   socket.on("chat-message", handleChatMessage);
+  socket.on("chat-history", handleChatHistory);
   // socket.on("user-joined", handleUserJoined);
 
   //Clean up
   return () => {
     socket.off("user-list", handleUserList);
     socket.off("chat-message", handleChatMessage);
+    socket.off("chat-history", handleChatHistory);
     // socket.off("user-joined", handleUserJoined);
   };
 }, []);
