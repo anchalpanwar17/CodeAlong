@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import Member from "../components/Member";
 import Editor from "../components/Editor";
 import socket from "../socket";
+import Chat from "./chat";
 
 function EditorPage() {
     const { roomId } = useParams();
@@ -19,7 +20,6 @@ function EditorPage() {
             navigate('/', { replace: true });
             return;
         }
-
 
         const handleRoomMembers = (clients) => {
             console.log("Clients in room:", clients);
@@ -46,9 +46,14 @@ function EditorPage() {
 
         socket.on('room-members', handleRoomMembers);
 
+        socket.on("user-joined", (name) => {
+            toast.success(`${name} joined the chat`)
+        });
+
         return () => {
             socket.off('room-members');
-            socket.off('connect', joinRoom); 
+            socket.off('connect', joinRoom);
+            socket.off("user-joined");
         };
     }, [roomId, username, navigate]);
 
@@ -80,6 +85,13 @@ function EditorPage() {
                     <Editor />
                 </div>
             </div>
+
+            <Chat roomId={roomId} username={username} />
+            {/* <div className="flex-1 p-6"> */}
+                {/* <h1 className="text-xl font-bold">Room ID: {roomId}</h1>
+                <h2 className="text-md">Welcome, {username}</h2> */}
+                {/* Your editor component here */}
+            {/* </div> */}
         </div>
     );
 
