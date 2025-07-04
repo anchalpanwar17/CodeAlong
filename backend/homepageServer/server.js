@@ -56,7 +56,7 @@ io.on('connect', (socket) => {
 
             io.to(roomId).emit('room-members', clients);
             const history = chatHistory.get(roomId) || [];
-            //socket.emit('chat-history', history); 
+            socket.emit('chat-history', history); 
             
         }
     });
