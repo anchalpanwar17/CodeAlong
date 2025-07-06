@@ -82,7 +82,7 @@ function EditorPage() {
             {/* Editor Space */}
             <div className="flex-1 h-full bg-gray-100">
                 <div className="h-full border bg-white">
-                    <Editor />
+                    <Editor roomId={roomId} username={username} />
                 </div>
             </div>
 
