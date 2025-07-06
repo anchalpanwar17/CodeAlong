@@ -41,7 +41,7 @@ io.on('connect', (socket) => {
 
     socket.on('join-room', ({roomId, username}) => {
         if(rooms.has(roomId)){
-           
+
             socket.join(roomId);
             console.log(`${socket.id} joined ${roomId}`);
 
@@ -52,12 +52,12 @@ io.on('connect', (socket) => {
             clients.push({socketId: socket.id, username});
             roomsMap.set(roomId, clients);
 
-            console.log(roomsMap);  
+            console.log(roomsMap);   
 
             io.to(roomId).emit('room-members', clients);
             const history = chatHistory.get(roomId) || [];
             socket.emit('chat-history', history); 
-            
+
         }
     });
 
@@ -68,7 +68,7 @@ io.on('connect', (socket) => {
         chatHistory.set(roomId, history);
         console.log(history)
         io.to(roomId).emit('chat-message', {username, message});
-        socket.emit('chat-history', history); 
+         socket.emit('chat-history', history); 
     })
 
     socket.on('disconnect', () => {
