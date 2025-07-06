@@ -21,6 +21,7 @@ const io = new Server(server, {
 const rooms = new Set();
 const roomsMap = new Map();
 const chatHistory = new Map(); 
+const codeMap = new Map();
 
 io.on('connect', (socket) => {
     console.log(`Socket connected : ${socket.id}`);
@@ -58,6 +59,12 @@ io.on('connect', (socket) => {
             const history = chatHistory.get(roomId) || [];
             socket.emit('chat-history', history); 
 
+
+            const latestCode = codeMap.get(roomId);
+            if(latestCode){
+                socket.emit('code-sync', { code : latestCode });
+            }
+
         }
     });
 
@@ -68,8 +75,13 @@ io.on('connect', (socket) => {
         chatHistory.set(roomId, history);
         console.log(history)
         io.to(roomId).emit('chat-message', {username, message});
-         socket.emit('chat-history', history); 
-    })
+        socket.emit('chat-history', history); 
+    });
+
+    socket.on('code-change', ({roomId, code}) => {
+        codeMap.set(roomId, code);
+        socket.to(roomId).emit('code-change', { code });
+    });
 
     socket.on('disconnect', () => {
         console.log(`Socket disconnected : ${socket.id}`);
