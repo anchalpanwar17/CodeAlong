@@ -111,6 +111,20 @@ function EditorPage() {
         }
 
     };
+//     useEffect(() => {
+//   socket.on('line-locked', ({ lineNumber, lockedBy }) => {
+//     //toast.error(`Line ${lineNumber} is locked by ${lockedBy}`);
+//     // Or send to chat
+//     socket.emit('chat-message', {
+//       roomId,
+//       username: 'System',
+//       message: `⚠️ Line ${lineNumber} is currently being edited by ${lockedBy}`
+//     });
+//   });
+
+//   return () => socket.off('line-locked');
+// }, []);
+
     return (
         <div className="flex h-screen">
             {/* Sidebar */}

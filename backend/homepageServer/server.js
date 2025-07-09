@@ -27,6 +27,7 @@ const chatHistory = new Map();
 const codeMap = new Map();
 const inputMap = new Map();
 const outputMap = new Map();
+const lineLocks = new Map(); // roomId -> { lineNumber: username }
 
 
 
@@ -109,9 +110,51 @@ io.on('connect', (socket) => {
     outputMap.set(roomId, output);
     socket.to(roomId).emit("code-output", output);
   });
+  //line locking mechanism
+  socket.on('line-lock', ({ roomId, lineNumber, username }) => {
+    const roomLocks = lineLocks.get(roomId) || {};
 
+    if (roomLocks[lineNumber] && roomLocks[lineNumber] !== username) {
+      // Notify user that the line is locked
+      io.to(socket.id).emit('line-locked', {
+        lineNumber,
+        lockedBy: roomLocks[lineNumber]
+      });
+      return;
+    }
+
+    roomLocks[lineNumber] = username;
+    lineLocks.set(roomId, roomLocks);
+  });
+
+  socket.on('release-locks', ({ roomId, exceptLine, username }) => {
+    const locks = lineLocks.get(roomId) || {};
+
+    for (const [lineStr, lockedBy] of Object.entries(locks)) {
+      const line = parseInt(lineStr);
+      if (lockedBy === username && line !== exceptLine) {
+        delete locks[line];
+        io.to(roomId).emit('line-unlocked', { lineNumber: line });
+      }
+    }
+
+    lineLocks.set(roomId, locks);
+  });
   socket.on('disconnect', () => {
+    socket.on('disconnect', () => {
+      // Clean all locks by this user
+      for (const [roomId, locks] of lineLocks.entries()) {
+        for (const line in locks) {
+          if (locks[line] === socket.username) {
+            delete locks[line];
+          }
+        }
+        lineLocks.set(roomId, locks);
+      }
+    });
+
     console.log(`Socket disconnected : ${socket.id}`);
+
   });
 });
 
