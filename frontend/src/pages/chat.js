@@ -78,12 +78,14 @@ const Chat = ({ roomId, username }) => {
   };
   return (
     <div className="w-64 bg-gray-900 text-white flex flex-col p-4 h-screen overflow-y-auto">
-      <h2 className="text-lg font-bold mb-2">Users</h2>
+      {/* ==========================users ke naam nhi chahiye chat section pe=========================================== */}
+
+      {/* <h2 className="text-lg font-bold mb-2">Users</h2>
       <ul className="mb-4">
         {users.map((u) => (
           <li key={u.socketId} className="text-sm">👤 {u.username}</li>
         ))}
-      </ul>
+      </ul> */}
       <div className="flex-1 mb-2 overflow-y-auto">
         <h2 className="text-lg font-bold mb-2">Chat</h2>
         <div className="space-y-1 text-sm max-h-64 overflow-y-scroll">

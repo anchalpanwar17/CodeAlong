@@ -4,7 +4,7 @@ import { cpp } from '@codemirror/lang-cpp';
 import { oneDark } from '@codemirror/theme-one-dark';
 import socket from "../../src/socket";
 
-const Editor = ({roomId, username}) => {
+const Editor = ({ roomId, username, onCodeChange }) => {
   const [code, setCode] = useState('// Write your C++ code here');
   const isRemoteUpdate = useRef(false);
 
@@ -13,11 +13,14 @@ const Editor = ({roomId, username}) => {
     const handleCodeSync = ({ code }) => {
       isRemoteUpdate.current = true;
       setCode(code);
+      if (onCodeChange) onCodeChange(code);
     }
 
     const handleCodeChange = ({ code }) => {
       isRemoteUpdate.current = true;
       setCode(code);
+      if (onCodeChange) onCodeChange(code);
+
     }
 
     socket.on('code-sync', handleCodeSync );
@@ -32,12 +35,20 @@ const Editor = ({roomId, username}) => {
   }, [roomId] );
 
 const codeChangeFunc = (value) => {
+    console.log("✏️ Current code:", value); 
   setCode(value);
-  if(!isRemoteUpdate.current){
+
+  if (onCodeChange) {
+    onCodeChange(value);  // 🔁 pass code to parent
+  }
+
+  if (!isRemoteUpdate.current) {
     socket.emit('code-change', { roomId, code: value });
   }
+
   isRemoteUpdate.current = false;
-}
+};
+
 
 
 return (

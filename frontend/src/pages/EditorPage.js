@@ -57,6 +57,60 @@ function EditorPage() {
         };
     }, [roomId, username, navigate]);
 
+    const [code, setCode] = useState('');
+    const [input, setInput] = useState('');
+    const [output, setOutput] = useState('');
+
+    useEffect(() => {
+        socket.on("input-changed", (newInput) => {
+            setInput(newInput);
+        });
+
+        socket.on("code-output", (result) => {
+            setOutput(result);
+        });
+
+        return () => {
+            socket.off("input-changed");
+            socket.off("code-output");
+        };
+    }, []);
+    const handleRunCode = async () => {
+        const languageId = 54; // Example: 54 = C++, 71 = Python, 62 = Java
+
+
+        try {
+            const response = await fetch("http://localhost:5000/run", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    source_code: code,
+                    language_id: languageId,
+                    stdin: input || ""
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.output) {
+                setOutput(result.output);
+                socket.emit("code-output", { roomId, output: result.output }); // 👈 broadcast output
+            } else if (result.error) {
+                setOutput(result.error);
+                socket.emit("code-output", { roomId, output: result.error });
+            } else {
+                setOutput("No output received.");
+                socket.emit("code-output", "No output received.");
+            }
+
+        } catch (err) {
+            console.error("Run error:", err);
+            setOutput("Something went wrong.");
+        }
+
+    };
     return (
         <div className="flex h-screen">
             {/* Sidebar */}
@@ -75,22 +129,43 @@ function EditorPage() {
 
                 </div>
 
+                {/* <button className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2" >Run / Compile Code</button> */}
                 <button className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2">Copy Room ID</button>
-                <button className="flex w-full justify-center rounded-md bg-red-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2">Leave</button>
+                <div className="mt-4">
+                    <textarea
+                        placeholder="Input (stdin)..."
+                        className="w-full h-24 p-2 rounded bg-gray-800 text-white mb-2"
+                        value={input}
+                        onChange={(e) => {
+                            setInput(e.target.value);
+                            socket.emit("input-changed", { roomId, input: e.target.value });
+                        }}
+                    />
+                    <button
+                        onClick={handleRunCode}
+                        className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 mb-2"
+                    >
+                        Run / Compile Code
+                    </button>
+                    <pre className="bg-black text-green-400 p-2 rounded h-48 overflow-auto">
+                        {output}
+                    </pre>
+                </div>
+
             </div>
 
             {/* Editor Space */}
             <div className="flex-1 h-full bg-gray-100">
                 <div className="h-full border bg-white">
-                    <Editor roomId={roomId} username={username} />
+                    <Editor roomId={roomId} username={username} onCodeChange={setCode} />
                 </div>
             </div>
 
             <Chat roomId={roomId} username={username} />
             {/* <div className="flex-1 p-6"> */}
-                {/* <h1 className="text-xl font-bold">Room ID: {roomId}</h1>
+            {/* <h1 className="text-xl font-bold">Room ID: {roomId}</h1>
                 <h2 className="text-md">Welcome, {username}</h2> */}
-                {/* Your editor component here */}
+            {/* Your editor component here */}
             {/* </div> */}
         </div>
     );
