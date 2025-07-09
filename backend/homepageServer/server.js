@@ -30,9 +30,11 @@ const outputMap = new Map();
 const lineLocks = new Map(); // roomId -> { lineNumber: username }
 
 
-
 io.on('connect', (socket) => {
   console.log(`Socket connected : ${socket.id}`);
+
+  console.log("Rooms Map : ", roomsMap);
+
 
   socket.on('create-room', (roomId) => {
     rooms.add(roomId);
@@ -48,20 +50,38 @@ io.on('connect', (socket) => {
     }
   });
 
+
   socket.on('join-room', ({ roomId, username }) => {
     if (rooms.has(roomId)) {
 
-      socket.join(roomId);
-      console.log(`${socket.id} joined ${roomId}`);
-
       let clients = roomsMap.get(roomId) || [];
 
-      clients = clients.filter(client => client.username !== username);
+      // console.log("mai pagal ho jaungi agr ye fix nhi hua toh");
+
+
+      //prevent multiple entries from same user socket ids
+      if (clients.some(client => client.socketId === socket.id)) {
+        // console.log("Socket already present");
+        return; // socket already joined
+      }
+
+      // // ✅ Prevent same username joining again and on refreshing users disappear
+      // if (clients.some(client => client.username === username)) {
+      //   console.log("prevent same user form joining");
+      //   // socket.emit('username-already-taken');
+      //   return;
+      // }
+
+
+      socket.join(roomId);
+      console.log(`${socket.id} joined ${roomId}`); /////
+
+      clients = clients.filter(client => client.username !== username); //on refresh users persist and when user join with same uername the older one is replaced
 
       clients.push({ socketId: socket.id, username });
       roomsMap.set(roomId, clients);
 
-      console.log(roomsMap);
+      console.log("Rooms Map : ", roomsMap); //////
 
       io.to(roomId).emit('room-members', clients);
       const history = chatHistory.get(roomId) || [];
@@ -83,9 +103,57 @@ io.on('connect', (socket) => {
         socket.emit("code-output", latestOutput);
       }
 
-
     }
   });
+
+  // const joinRoom = () => {
+  //   console.log("Trying to join room:", roomId);
+
+  //   // 1. Check if room exists
+  //   socket.emit('check-room', roomId, (exists) => {
+  //     if (!exists) {
+  //       toast.error("Room doesn't exist");
+  //       navigate('/', { replace: true });
+  //       return;
+  //     }
+
+  //     // 2. Check if username already exists in room
+  //     socket.emit('get-room-members', roomId, (clients) => {
+  //       const duplicate = clients.some(client =>
+  //         client.username === username && client.socketId !== socket.id // important condition
+  //       );
+
+  //       if (duplicate) {
+  //         toast.error("Username already taken in this room");
+  //         navigate('/', { replace: true });
+  //         return;
+  //       }
+
+  //       // 3. Now safe to join
+  //       socket.emit('join-room', { roomId, username });
+  //       console.log("Joining room:", roomId, username);
+  //     });
+  //   });
+  // };
+
+
+  socket.on('leave-room', ({ roomId, socketId }) => {
+  let clients = roomsMap.get(roomId) || [];
+
+  // 🔥 Remove the user by socketId
+  clients = clients.filter(client => client.socketId !== socketId);
+
+  if (clients.length === 0) {
+    roomsMap.delete(roomId);
+  } else {
+    roomsMap.set(roomId, clients);
+  }
+
+  socket.leave(roomId);
+  io.to(roomId).emit('room-members', clients);
+  console.log(`${socketId} left room ${roomId}`);
+});
+
 
   socket.on('chat-message', ({ roomId, username, message }) => {
 
@@ -140,22 +208,40 @@ io.on('connect', (socket) => {
 
     lineLocks.set(roomId, locks);
   });
+  // socket.on('disconnect', () => {
+  //   socket.on('disconnect', () => {
+  //     // Clean all locks by this user
+  //     for (const [roomId, locks] of lineLocks.entries()) {
+  //       for (const line in locks) {
+  //         if (locks[line] === socket.username) {
+  //           delete locks[line];
+  //         }
+  //       }
+  //       lineLocks.set(roomId, locks);
+  //     }
+  //   });
+
   socket.on('disconnect', () => {
-    socket.on('disconnect', () => {
-      // Clean all locks by this user
-      for (const [roomId, locks] of lineLocks.entries()) {
-        for (const line in locks) {
-          if (locks[line] === socket.username) {
-            delete locks[line];
-          }
+    // 🧹 Remove line locks
+    for (const [roomId, locks] of lineLocks.entries()) {
+      for (const line in locks) {
+        if (locks[line] === socket.username) {
+          delete locks[line];
         }
-        lineLocks.set(roomId, locks);
       }
-    });
+      lineLocks.set(roomId, locks);
+    }
 
-    console.log(`Socket disconnected : ${socket.id}`);
-
+    // 🧹 Remove user from room
+    const { roomId, username } = socket;
+    if (roomId && username && roomUsers[roomId]) {
+      roomUsers[roomId] = roomUsers[roomId].filter(u => u !== username);
+      if (roomUsers[roomId].length === 0) delete roomUsers[roomId];
+    }
   });
+
+  console.log(`Socket disconnected : ${socket.id}`);
+
 });
 
 const axios = require("axios");

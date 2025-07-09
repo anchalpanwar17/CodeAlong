@@ -1,4 +1,4 @@
-import { React, useState, useEffect } from "react";
+import { React, useState, useEffect, useRef } from "react";
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import toast from "react-hot-toast";
 import Member from "../components/Member";
@@ -27,9 +27,13 @@ function EditorPage() {
         };
 
         const joinRoom = () => {
+
+            console.log("Trying to join room:", roomId);
             socket.emit('check-room', roomId, (exists) => {
                 if (exists) {
                     socket.emit('join-room', { roomId, username });
+
+                    console.log("memberssss: ", members);
                     console.log("Joining room:", roomId, username);
                 } else {
                     toast.error("Room doesn't exist");
@@ -37,6 +41,33 @@ function EditorPage() {
                 }
             });
         };
+
+        // const joinRoom = () => {
+        //     console.log("Trying to join room:", roomId);
+
+        //     socket.emit('check-room', roomId, (exists) => {
+        //         if (exists) {
+        //             socket.emit('get-room-members', roomId, (clients) => {
+        //                 const duplicate = clients.some(client => client.username === username);
+
+        //                 if (duplicate) {
+        //                     toast.error("Username already taken in this room");
+        //                     navigate('/', { replace: true });
+        //                     return;
+        //                 }
+
+        //                 socket.emit('join-room', { roomId, username });
+        //                 console.log("memberssss: ", members);
+        //                 console.log("Joining room:", roomId, username);
+        //             });
+        //         } else {
+        //             toast.error("Room doesn't exist");
+        //             navigate('/', { replace: true });
+        //         }
+        //     });
+        // };
+
+
 
         if (socket.connected) {
             joinRoom();
@@ -50,12 +81,32 @@ function EditorPage() {
             toast.success(`${name} joined the chat`)
         });
 
+        // socket.on("username-already-taken", () => {
+        //     toast.error("Username already taken in this room!");
+        //     navigate('/', { replace: true });
+        // });
+
         return () => {
             socket.off('room-members');
             socket.off('connect', joinRoom);
-            socket.off("user-joined");
+            socket.off('user-joined');
         };
     }, [roomId, username, navigate]);
+
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            if (socket.id) {
+                socket.emit('leave-room', { roomId, socketId: socket.id });
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [roomId]);
+
 
     const [code, setCode] = useState('');
     const [input, setInput] = useState('');
@@ -75,9 +126,9 @@ function EditorPage() {
             socket.off("code-output");
         };
     }, []);
+
     const handleRunCode = async () => {
         const languageId = 54; // Example: 54 = C++, 71 = Python, 62 = Java
-
 
         try {
             const response = await fetch("http://localhost:5000/run", {
@@ -96,7 +147,7 @@ function EditorPage() {
 
             if (result.output) {
                 setOutput(result.output);
-                socket.emit("code-output", { roomId, output: result.output }); // 👈 broadcast output
+                socket.emit("code-output", { roomId, output: result.output });
             } else if (result.error) {
                 setOutput(result.error);
                 socket.emit("code-output", { roomId, output: result.error });
@@ -109,21 +160,54 @@ function EditorPage() {
             console.error("Run error:", err);
             setOutput("Something went wrong.");
         }
-
     };
-//     useEffect(() => {
-//   socket.on('line-locked', ({ lineNumber, lockedBy }) => {
-//     //toast.error(`Line ${lineNumber} is locked by ${lockedBy}`);
-//     // Or send to chat
-//     socket.emit('chat-message', {
-//       roomId,
-//       username: 'System',
-//       message: `⚠️ Line ${lineNumber} is currently being edited by ${lockedBy}`
-//     });
-//   });
 
-//   return () => socket.off('line-locked');
-// }, []);
+    const handleCopyRoomId = async () => {
+        try {
+            await navigator.clipboard.writeText(roomId);
+            toast.success("Room ID copied to clipboard!");
+        } catch (err) {
+            toast.error("Failed to copy Room ID");
+        }
+    };
+
+    const handleSaveCodeFile = async () => {
+        try {
+            const blob = new Blob([code], { type: "text/plain" }); // create a file-like object
+            const url = URL.createObjectURL(blob); // create a downloadable URL
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "code.cpp"; // fixed filename with C++ extension
+            a.click(); // programmatically trigger download
+
+            URL.revokeObjectURL(url); // cleanup to avoid memory leaks
+        } catch (error) {
+            console.error("Failed to save code:", error);
+        }
+    };
+
+
+    const handleLeaveRoom = async () => {
+        if (!socket.id) return;
+        socket.emit('leave-room', { roomId, socketId: socket.id });
+        navigate('/', { replace: true });
+    };
+
+
+    //     useEffect(() => {
+    //   socket.on('line-locked', ({ lineNumber, lockedBy }) => {
+    //     //toast.error(`Line ${lineNumber} is locked by ${lockedBy}`);
+    //     // Or send to chat
+    //     socket.emit('chat-message', {
+    //       roomId,
+    //       username: 'System',
+    //       message: `⚠️ Line ${lineNumber} is currently being edited by ${lockedBy}`
+    //     });
+    //   });
+
+    //   return () => socket.off('line-locked');
+    // }, []);
 
     return (
         <div className="flex h-screen">
@@ -144,7 +228,26 @@ function EditorPage() {
                 </div>
 
                 {/* <button className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2" >Run / Compile Code</button> */}
-                <button className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2">Copy Room ID</button>
+                <button
+                    onClick={handleCopyRoomId}
+                    className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2"
+                >
+                    Copy Room ID
+                </button>
+                <button
+                    onClick={handleSaveCodeFile}
+                    className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2"
+                >
+                    Save Code File
+                </button>
+
+                <button
+                    onClick={handleLeaveRoom}
+                    className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 mb-2"
+                >
+                    Leave Room
+                </button>
+
                 <div className="mt-4">
                     <textarea
                         placeholder="Input (stdin)..."

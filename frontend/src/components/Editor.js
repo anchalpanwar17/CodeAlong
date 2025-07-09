@@ -78,7 +78,7 @@ const Editor = ({ roomId, username, onCodeChange }) => {
       for (let line = lineStart; line <= lineEnd; line++) {
         if (lockedLines[line] && lockedLines[line] !== username) {
           if (!shownToastsRef.current[line]) {
-            toast.error(`⛔ Line ${line} is locked by ${lockedLines[line]}`);
+            toast(`⛔ Line ${line} is in use by ${lockedLines[line]}`);
             shownToastsRef.current[line] = true;
 
             setTimeout(() => {
