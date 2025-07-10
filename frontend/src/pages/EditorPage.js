@@ -192,6 +192,10 @@ function EditorPage() {
         if (!socket.id) return;
         socket.emit('leave-room', { roomId, socketId: socket.id });
         navigate('/', { replace: true });
+
+
+        //release lock on leave room
+        // socket.emit('release-locks', { roomId, exceptLine: currentLine, username });
     };
 
 

@@ -16,10 +16,10 @@ const Editor = ({ roomId, username, onCodeChange }) => {
   const [lockedLines, setLockedLines] = useState({});
 
 
-
   useEffect(() => {
 
     const handleCodeSync = ({ code }) => {
+      console.log("This is handleCodeSYnc to check code sync on refresh");
       const doc = EditorState.create({ doc: code });
       const lines = doc.doc.toString().split('\n');
       isRemoteUpdate.current = true;
@@ -31,7 +31,6 @@ const Editor = ({ roomId, username, onCodeChange }) => {
       isRemoteUpdate.current = true;
       setCode(code);
       if (onCodeChange) onCodeChange(code);
-
     }
 
     socket.on('code-sync', handleCodeSync);
@@ -142,8 +141,6 @@ const Editor = ({ roomId, username, onCodeChange }) => {
 
   //   isRemoteUpdate.current = false;
   // };
-
-
 
   return (
     <div className="h-full w-full bg-[#1e1e1e]">

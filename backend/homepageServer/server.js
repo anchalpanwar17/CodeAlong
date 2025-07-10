@@ -93,6 +93,11 @@ io.on('connect', (socket) => {
         socket.emit('code-sync', { code: latestCode });
       }
 
+      socket.on('code-change', ({ roomId, code }) => {
+        codeMap.set(roomId, code);
+        socket.to(roomId).emit('code-change', { code });
+      });
+
       const latestInput = inputMap.get(roomId);
       if (latestInput) {
         socket.emit("input-changed", latestInput);
@@ -138,21 +143,22 @@ io.on('connect', (socket) => {
 
 
   socket.on('leave-room', ({ roomId, socketId }) => {
-  let clients = roomsMap.get(roomId) || [];
+    let clients = roomsMap.get(roomId) || [];
 
-  // 🔥 Remove the user by socketId
-  clients = clients.filter(client => client.socketId !== socketId);
+    // 🔥 Remove the user by socketId
+    clients = clients.filter(client => client.socketId !== socketId);
 
-  if (clients.length === 0) {
-    roomsMap.delete(roomId);
-  } else {
-    roomsMap.set(roomId, clients);
-  }
+    if (clients.length === 0) {
+      roomsMap.delete(roomId);
+    } else {
+      roomsMap.set(roomId, clients);
+    }
 
-  socket.leave(roomId);
-  io.to(roomId).emit('room-members', clients);
-  console.log(`${socketId} left room ${roomId}`);
-});
+    socket.leave(roomId);
+    io.to(roomId).emit('room-members', clients);
+    console.log(`${socketId} left room ${roomId}`);
+    
+  });
 
 
   socket.on('chat-message', ({ roomId, username, message }) => {
@@ -165,10 +171,10 @@ io.on('connect', (socket) => {
     socket.emit('chat-history', history);
   });
 
-  socket.on('code-change', ({ roomId, code }) => {
-    codeMap.set(roomId, code);
-    socket.to(roomId).emit('code-change', { code });
-  });
+  // socket.on('code-change', ({ roomId, code }) => {
+  //   codeMap.set(roomId, code);
+  //   socket.to(roomId).emit('code-change', { code });
+  // });
 
   socket.on("input-changed", ({ roomId, input }) => {
     inputMap.set(roomId, input);
@@ -205,7 +211,6 @@ io.on('connect', (socket) => {
         io.to(roomId).emit('line-unlocked', { lineNumber: line });
       }
     }
-
     lineLocks.set(roomId, locks);
   });
   // socket.on('disconnect', () => {
