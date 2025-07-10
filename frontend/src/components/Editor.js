@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 
 
 
-const Editor = ({ roomId, username, onCodeChange }) => {
+const Editor = ({ roomId, username, onCodeChange, onCurrentLineChange }) => {
   const [code, setCode] = useState('// Write your C++ code here');
   const isRemoteUpdate = useRef(false);
   const editorRef = useRef(null); // To store the view
@@ -103,6 +103,7 @@ const Editor = ({ roomId, username, onCodeChange }) => {
       const newCode = viewUpdate.state.doc.toString();
       const currentLine = viewUpdate.state.doc.lineAt(viewUpdate.state.selection.main.head).number;
 
+      if (onCurrentLineChange) onCurrentLineChange(currentLine);
       if (!isRemoteUpdate.current) {
         // 🔁 Emit updated code
         socket.emit('code-change', { roomId, code: newCode });

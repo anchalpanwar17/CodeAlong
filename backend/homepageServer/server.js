@@ -75,6 +75,8 @@ io.on('connect', (socket) => {
 
       socket.join(roomId);
       console.log(`${socket.id} joined ${roomId}`); /////
+      socket.username = username;
+      socket.roomId = roomId;
 
       clients = clients.filter(client => client.username !== username); //on refresh users persist and when user join with same uername the older one is replaced
 
@@ -145,9 +147,29 @@ io.on('connect', (socket) => {
   socket.on('leave-room', ({ roomId, socketId }) => {
     let clients = roomsMap.get(roomId) || [];
 
-    // 🔥 Remove the user by socketId
-    clients = clients.filter(client => client.socketId !== socketId);
+    const leavingClient = clients.find(c => c.socketId === socketId);
+    const username = leavingClient?.username;
 
+    // ✅ Remove line locks by this user
+    if (username) {
+      const roomLocks = lineLocks.get(roomId) || {};
+      let updated = false;
+
+      for (const line in roomLocks) {
+        if (roomLocks[line] === username) {
+          delete roomLocks[line];
+          updated = true;
+          io.to(roomId).emit('line-unlocked', { lineNumber: parseInt(line) });
+        }
+      }
+
+      if (updated) {
+        lineLocks.set(roomId, roomLocks);
+      }
+    }
+
+    // ✅ Remove from members list
+    clients = clients.filter(client => client.socketId !== socketId);
     if (clients.length === 0) {
       roomsMap.delete(roomId);
     } else {
@@ -157,8 +179,8 @@ io.on('connect', (socket) => {
     socket.leave(roomId);
     io.to(roomId).emit('room-members', clients);
     console.log(`${socketId} left room ${roomId}`);
-    
   });
+
 
 
   socket.on('chat-message', ({ roomId, username, message }) => {
@@ -227,23 +249,44 @@ io.on('connect', (socket) => {
   //   });
 
   socket.on('disconnect', () => {
-    // 🧹 Remove line locks
-    for (const [roomId, locks] of lineLocks.entries()) {
-      for (const line in locks) {
-        if (locks[line] === socket.username) {
-          delete locks[line];
+    const username = socket.username;
+    const roomId = socket.roomId;
+
+    console.log(`Socket disconnected : ${socket.id}, User: ${username}, Room: ${roomId}`);
+
+    // ✅ Step 1: Release all line locks by this user
+    if (roomId && username) {
+      const roomLocks = lineLocks.get(roomId) || {};
+      let updated = false;
+
+      for (const line in roomLocks) {
+        if (roomLocks[line] === username) {
+          delete roomLocks[line];
+          updated = true;
+          io.to(roomId).emit('line-unlocked', { lineNumber: parseInt(line) });
         }
       }
-      lineLocks.set(roomId, locks);
+
+      if (updated) {
+        lineLocks.set(roomId, roomLocks);
+      }
     }
 
-    // 🧹 Remove user from room
-    const { roomId, username } = socket;
-    if (roomId && username && roomUsers[roomId]) {
-      roomUsers[roomId] = roomUsers[roomId].filter(u => u !== username);
-      if (roomUsers[roomId].length === 0) delete roomUsers[roomId];
+    // ✅ Step 2: Remove user from room members
+    if (roomId) {
+      let clients = roomsMap.get(roomId) || [];
+      clients = clients.filter(client => client.socketId !== socket.id);
+
+      if (clients.length === 0) {
+        roomsMap.delete(roomId);
+      } else {
+        roomsMap.set(roomId, clients);
+      }
+
+      io.to(roomId).emit('room-members', clients);
     }
   });
+
 
   console.log(`Socket disconnected : ${socket.id}`);
 

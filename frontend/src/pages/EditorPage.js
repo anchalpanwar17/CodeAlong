@@ -11,6 +11,7 @@ function EditorPage() {
     const location = useLocation();
     const navigate = useNavigate();
     const username = location.state?.username;
+    const [currentLine, setCurrentLine] = useState(null);
 
     const [members, setMembers] = useState([]);
 
@@ -191,11 +192,14 @@ function EditorPage() {
     const handleLeaveRoom = async () => {
         if (!socket.id) return;
         socket.emit('leave-room', { roomId, socketId: socket.id });
+
+        //release lock on leave room
+        socket.emit('release-locks', { roomId, exceptLine: currentLine, username });
+        
         navigate('/', { replace: true });
 
 
-        //release lock on leave room
-        // socket.emit('release-locks', { roomId, exceptLine: currentLine, username });
+        
     };
 
 
@@ -278,7 +282,7 @@ function EditorPage() {
             {/* Editor Space */}
             <div className="flex-1 h-full bg-gray-100">
                 <div className="h-full border bg-white">
-                    <Editor roomId={roomId} username={username} onCodeChange={setCode} />
+                    <Editor roomId={roomId} username={username} onCodeChange={setCode} onCurrentLineChange={setCurrentLine}/>
                 </div>
             </div>
 
