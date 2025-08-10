@@ -3,6 +3,8 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const path = require("path");
+
 
 const encode = (str) => Buffer.from(str).toString("base64");
 const decode = (str) => Buffer.from(str, 'base64').toString();
@@ -10,7 +12,7 @@ const decode = (str) => Buffer.from(str, 'base64').toString();
 const app = express();
 app.use(cors());
 
-app.get('/', (req, res) => {
+app.get('/status', (req, res) => {
   res.send("Socket.IO server is up and running 🚀");
 });
 
@@ -378,10 +380,17 @@ app.post('/run', async (req, res) => {
 });
 
 // Serve frontend
-app.use(express.static(path.join(__dirname, "build")));
+// app.use(express.static(path.join(__dirname, "build")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "build", "index.html"));
+// app.get("/*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "build", "index.html"));
+// });
+
+const buildPath = path.join(__dirname, "build");
+app.use(express.static(buildPath));
+
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
 });
 
 
